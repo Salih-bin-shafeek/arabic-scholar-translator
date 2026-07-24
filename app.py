@@ -114,11 +114,17 @@ st.markdown("<h1>Arabic Scholar Translator</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #666;'>Upload an image of any Arabic text and receive a complete 6-part scholarly analysis.</p>", unsafe_allow_html=True)
 
 # Hidden API key input for security, or place it in a sidebar
-with st.sidebar:
-    api_key = st.text_input("Enter Gemini API Key", type="password")
+# OLD CODE:
+# with st.sidebar:
+#     api_key = st.text_input("Enter Gemini API Key", type="password")
 
-st.write("") # Spacer
-st.write("")
+# NEW CODE:
+# Check if API key exists in Streamlit Secrets, otherwise fallback to sidebar input
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+else:
+    with st.sidebar:
+        api_key = st.text_input("Enter Gemini API Key", type="password")
 
 # Centered upload area
 col1, col2, col3 = st.columns([1, 2, 1])
