@@ -140,7 +140,7 @@ if uploaded_file:
                 image = PIL.Image.open(uploaded_file)
                 
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash", 
+                    model="gemini-3.6-flash", 
                     contents=[image, "Please analyze this text according to your instructions."],
                     config=types.GenerateContentConfig(
                         system_instruction=AGENT_PROMPT,
