@@ -1,39 +1,10 @@
-import streamlit as st
-from google import genai
-from google.genai import types
-import PIL.Image
-import io
-import re
+[server]
+websocketPingInterval = 10
+websocketPingTimeout = 30
+maxUploadSize = 200
 
-# 1. Page Configuration
-st.set_page_config(page_title="Arabic Scholar Translator", layout="wide", initial_sidebar_state="collapsed")
-
-# 2. Custom CSS to match the Figma design exactly
-st.markdown("""
-    <style>
-    /* Main background color and font */
-    .stApp {
-        background-color: #F9F8F6;
-        color: #333333;
-        font-family: 'Georgia', serif;
-    }
-    
-    /* Center the main headers */
-    h1, h2, h3 {
-        text-align: center;
-        font-family: 'Georgia', serif;
-        color: #2C2A25;
-    }
-    
-    /* Style the file uploader to look like the drag-and-drop box */
-    [data-testid="stFileUploadDropzone"] {
-        background-color: transparent;
-        border: 2px dashed #D3CABC;
-        border-radius: 10px;
-        padding: 40px;
-    }
-    
-    /* Style the tabs to match the minimalist buttons */
+[browser]
+gatherUsageStats = false
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         justify-content: center;
