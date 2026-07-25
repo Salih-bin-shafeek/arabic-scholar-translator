@@ -221,7 +221,7 @@ if uploaded_file:
                     client = genai.Client(api_key=api_key)
                     
                     response = client.models.generate_content(
-                        model="gemini-2.5-flash", 
+                        model="gemini-3.6-flash", 
                         contents=[image, "Please analyze this text according to your instructions."],
                         config=types.GenerateContentConfig(
                             system_instruction=AGENT_PROMPT,
