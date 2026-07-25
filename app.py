@@ -2,6 +2,7 @@ import streamlit as st
 from google import genai
 from google.genai import types
 import PIL.Image
+import io
 import re
 
 # 1. Page Configuration
@@ -127,6 +128,12 @@ STRICT BEHAVIORAL RULES:
 3. PRESERVE THE RULES: If the user asks to save or modify prompts, confirm adherence to these instructions while staying locked into this exact framework."""
 
 
+# Helper function with caching to handle uploaded image safely without dropping WebSocket connections
+@st.cache_data
+def process_uploaded_bytes(file_bytes):
+    return PIL.Image.open(io.BytesIO(file_bytes))
+
+
 # 4. Helper Function to parse the 6 sections
 def parse_analysis(text):
     """Splits the Gemini output into the 6 distinct tabs."""
@@ -135,7 +142,6 @@ def parse_analysis(text):
         "insights": "", "grammar": "", "vocabulary": ""
     }
     
-    # Simple regex to split by the section headers defined in the prompt
     split_text = re.split(r'Section \d:', text)
     
     if len(split_text) >= 7:
@@ -146,7 +152,6 @@ def parse_analysis(text):
         sections["grammar"] = split_text[5].strip()
         sections["vocabulary"] = split_text[6].strip()
     else:
-        # Fallback if the model misses the exact headings
         sections["text"] = text
         
     return sections
@@ -155,13 +160,7 @@ def parse_analysis(text):
 st.markdown("<h1>Arabic Scholar Translator</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #666;'>Upload an image of any Arabic text and receive a complete 6-part scholarly analysis.</p>", unsafe_allow_html=True)
 
-# Hidden API key input for security, or place it in a sidebar
-# OLD CODE:
-# with st.sidebar:
-#     api_key = st.text_input("Enter Gemini API Key", type="password")
-
-# NEW CODE:
-# Check if API key exists in Streamlit Secrets, otherwise fallback to sidebar input
+# API Key check
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
@@ -178,60 +177,66 @@ if uploaded_file:
     if not api_key:
         st.warning("Please enter your Gemini API Key in the sidebar to proceed.")
     else:
-        # Show a small preview of the uploaded image
-        st.image(uploaded_file, width=150)
-        st.markdown("<h3 style='text-align:center;'>Analyzing your text...</h3>", unsafe_allow_html=True)
+        # 1. Store image bytes immediately to protect against stream closing
+        file_bytes = uploaded_file.getvalue()
+        image = process_uploaded_bytes(file_bytes)
         
-        with st.spinner("Applying all 6 scholarly sections..."):
-            try:
-                client = genai.Client(api_key=api_key)
-                image = PIL.Image.open(uploaded_file)
-                
-                response = client.models.generate_content(
-                    model="gemini-3.6-flash", 
-                    contents=[image, "Please analyze this text according to your instructions."],
-                    config=types.GenerateContentConfig(
-                        system_instruction=AGENT_PROMPT,
-                        temperature=0.2,
+        # Show image preview
+        st.image(image, width=200)
+        
+        # 2. Add an explicit button to prevent execution lock during file selection
+        if st.button("Analyze Document", type="primary"):
+            st.markdown("<h3 style='text-align:center;'>Analyzing your text...</h3>", unsafe_allow_html=True)
+            
+            with st.spinner("Applying all 6 scholarly sections..."):
+                try:
+                    client = genai.Client(api_key=api_key)
+                    
+                    response = client.models.generate_content(
+                        model="gemini-3.6-flash", 
+                        contents=[image, "Please analyze this text according to your instructions."],
+                        config=types.GenerateContentConfig(
+                            system_instruction=AGENT_PROMPT,
+                            temperature=0.2,
+                        )
                     )
-                )
-                
-                # Parse the response into the 6 variables
-                parsed_data = parse_analysis(response.text)
-                
-                # Create the UI Tabs matching the Figma design
-                tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-                    "Complete Text", 
-                    "Word-for-Word", 
-                    "Line-by-Line", 
-                    "Insights", 
-                    "Grammar", 
-                    "Vocabulary"
-                ])
-                
-                with tab1:
-                    st.markdown("### Complete Text with Tashkeel")
-                    st.markdown(f"<div class='arabic-text'>{parsed_data['text']}</div>", unsafe_allow_html=True)
-                
-                with tab2:
-                    st.markdown("### Word-for-Word Literal Translation")
-                    st.markdown(parsed_data['word_for_word'])
                     
-                with tab3:
-                    st.markdown("### Natural Line-by-Line Translation")
-                    st.markdown(parsed_data['line_by_line'])
+                    # Parse the response into the 6 variables
+                    parsed_data = parse_analysis(response.text)
                     
-                with tab4:
-                    st.markdown("### Conceptual & Spiritual Insights")
-                    st.markdown(parsed_data['insights'])
+                    # Create the UI Tabs matching the Figma design
+                    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+                        "Complete Text", 
+                        "Word-for-Word", 
+                        "Line-by-Line", 
+                        "Insights", 
+                        "Grammar", 
+                        "Vocabulary"
+                    ])
                     
-                with tab5:
-                    st.markdown("### Grammatical Breakdown (Iʿrāb & Tarkīb)")
-                    st.markdown(parsed_data['grammar'])
+                    with tab1:
+                        st.markdown("### Complete Text with Tashkeel")
+                        st.markdown(f"<div class='arabic-text'>{parsed_data['text']}</div>", unsafe_allow_html=True)
                     
-                with tab6:
-                    st.markdown("### Complete Exhaustive Vocabulary List")
-                    st.markdown(parsed_data['vocabulary'])
-                    
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
+                    with tab2:
+                        st.markdown("### Word-for-Word Literal Translation")
+                        st.markdown(parsed_data['word_for_word'])
+                        
+                    with tab3:
+                        st.markdown("### Natural Line-by-Line Translation")
+                        st.markdown(parsed_data['line_by_line'])
+                        
+                    with tab4:
+                        st.markdown("### Conceptual & Spiritual Insights")
+                        st.markdown(parsed_data['insights'])
+                        
+                    with tab5:
+                        st.markdown("### Grammatical Breakdown (Iʿrāb & Tarkīb)")
+                        st.markdown(parsed_data['grammar'])
+                        
+                    with tab6:
+                        st.markdown("### Complete Exhaustive Vocabulary List")
+                        st.markdown(parsed_data['vocabulary'])
+                        
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
