@@ -141,7 +141,7 @@ Section 6: Complete Exhaustive Vocabulary List (al-Mufradāt)
   1. Word in Text (As it appears in the passage with Tashkeel)
   2. Root (Jadhr / جذر - 3-letter system)
   3. Arabic Verb Conjugations (Māḍī / الماضي, Muḍāriʿ / المضارع, Amr / الأمر - give N/A for non-verbs)
-  4. Arabic Verb Form / Weight (e.g., Form I / Faʿala - فَعَلَ, Form II / Tafʿīl - تَفْعِيل, Form IV / Ifʿāl - إِفْعَال, Form V / Tafaʿʿul - تَفَعُّل)
+  4. Arabic Verb Form / Weight (e.g., Form I / Faʿala - فَعَلَ, Form II / Tafʿīl - تَفْعِيل, Form IV / Ifʿāl - إِفْعَال, Form V / Tafaʿʿul - تَفَعُّل) should be in arabic
   5. Meaning in Context
   6. Grammatical Type (e.g., Ism, Fiʿl, Ḥarf, Ism Fāʿil, Ism Mafʿūl, Maṣdar)
 
